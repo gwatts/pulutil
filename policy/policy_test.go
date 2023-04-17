@@ -112,15 +112,53 @@ func TestStringArrayJSON(t *testing.T) {
 		)
 
 		expected := `{
-			"Id": "id", 
+			"Id": "id",
 			"Version": "2012-10-17",
-			"Statement": {
+			"Statement": [{
 					"Sid": "stmt1",
 					"Effect": "Allow",
 					"Action": "action",
 					"Principal": {"AWS": ["aws-id", "id2", "id3"]},
 					"Resource": "r1"
-			}
+			}]
+		}`
+		p.ToStringOutput().ApplyT(func(js string) int {
+			assert.JSONEq(expected, js)
+			wg.Done()
+			return 0
+		})
+		return nil
+	}, pulumi.WithMocks("project", "stack", mocks(0)))
+	wg.Wait()
+}
+
+func TestConditionMapJSON(t *testing.T) {
+	assert := assert.New(t)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	_ = pulumi.RunErr(func(ctx *pulumi.Context) error {
+		p := New("id",
+			Statement("stmt1",
+				Effect(Allow),
+				Action("action"),
+				Condition("StringNotEquals", "s3:x-amz-server-side-encryption", "AES256"),
+			),
+		)
+
+		expected := `{
+			"Id": "id",
+			"Version": "2012-10-17",
+			"Statement": [{
+					"Sid": "stmt1",
+					"Effect": "Allow",
+					"Action": "action",
+					"Condition": {
+						"StringNotEquals": {
+							"s3:x-amz-server-side-encryption": "AES256"
+						}
+					}
+			}]
 		}`
 		p.ToStringOutput().ApplyT(func(js string) int {
 			assert.JSONEq(expected, js)
@@ -161,7 +199,7 @@ func TestMultiStmtJSON(t *testing.T) {
 		)
 
 		expected := `{
-			"Id": "id", 
+			"Id": "id",
 			"Version": "2012-10-17",
 			"Statement": [
 				{

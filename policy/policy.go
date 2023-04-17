@@ -111,25 +111,17 @@ func (p Policy) ToStringOutputWithContext(ctx context.Context) pulumi.StringOutp
 // Stmts holds an ordered group of statements.
 type Stmts []Stmt
 
-// MarshalJSON implements json.Marshaler.
-func (s Stmts) MarshalJSON() ([]byte, error) {
-	if len(s) == 1 {
-		return json.Marshal(s[0])
-	}
-	return json.Marshal([]Stmt(s))
-}
-
 // Stmt define a single policy statement.
 type Stmt struct {
 	Sid          string `json:",omitempty"`
 	Effect       EffectType
-	Principal    map[string]Strings `json:",omitempty"`
-	NotPrincipal map[string]Strings `json:",omitempty"`
-	Action       Strings            `json:",omitempty"`
-	NotAction    Strings            `json:",omitempty"`
-	Resource     Strings            `json:",omitempty"`
-	NotResource  Strings            `json:",omitempty"`
-	Condition    interface{}        `json:",omitempty"`
+	Principal    map[string]Strings            `json:",omitempty"`
+	NotPrincipal map[string]Strings            `json:",omitempty"`
+	Action       Strings                       `json:",omitempty"`
+	NotAction    Strings                       `json:",omitempty"`
+	Resource     Strings                       `json:",omitempty"`
+	NotResource  Strings                       `json:",omitempty"`
+	Condition    map[string]map[string]Strings `json:",omitempty"`
 }
 
 // Validate does some very basic checks to ensure required fields are present.
@@ -148,10 +140,6 @@ func (s Stmt) Validate() error {
 	}
 	if len(s.Action) > 0 && len(s.NotAction) > 0 {
 		return fmt.Errorf("%w: Action and NotAction are mutually exclusive for statement %q",
-			ErrInvalidStatement, s.Sid)
-	}
-	if len(s.Resource) == 0 && len(s.NotResource) == 0 {
-		return fmt.Errorf("%w: no Resource or NotResource specified for statement %q",
 			ErrInvalidStatement, s.Sid)
 	}
 	if len(s.Resource) > 0 && len(s.NotResource) > 0 {
@@ -299,5 +287,26 @@ func NotResource(resource ...interface{}) StatementOpt {
 	resources := resource
 	return func(s *Stmt) {
 		s.NotResource = append(s.NotResource, resources...)
+	}
+}
+
+// Condition adds an entry to the Condition element of a Statemment.
+// It can be called multiple times to add additional resources.
+//
+// See https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
+// for examples of condition operators, keys and values.
+//
+// conditionValues arguments may be string, []string, StringInput or StrayArrayInput.
+func Condition(conditionOp, conditionKey string, conditionValue ...interface{}) StatementOpt {
+	return func(s *Stmt) {
+		if s.Condition == nil {
+			s.Condition = make(map[string]map[string]Strings)
+		}
+		if s.Condition[conditionOp] == nil {
+			s.Condition[conditionOp] = make(map[string]Strings)
+		}
+		var v Strings
+		v = append(v, conditionValue...)
+		s.Condition[conditionOp][conditionKey] = v
 	}
 }

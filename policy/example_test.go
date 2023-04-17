@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gwatts/pulutil/policy"
-	"github.com/pulumi/pulumi-aws/sdk/v4/go/aws/s3"
+	"github.com/pulumi/pulumi-aws/sdk/v5/go/aws/s3"
 	"github.com/pulumi/pulumi/sdk/v3/go/common/resource"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 	"github.com/stretchr/testify/require"
@@ -62,18 +62,20 @@ func ExampleNew() {
 	// {
 	//     "Version": "2012-10-17",
 	//     "Id": "my-policy",
-	//     "Statement": {
-	//         "Sid": "statement-one",
-	//         "Effect": "Allow",
-	//         "Principal": {
-	//             "AWS": "arn:aws:iam::12345:root"
-	//         },
-	//         "Action": [
-	//             "s3:GetObject",
-	//             "s3:PutObject"
-	//         ],
-	//         "Resource": "arn:aws:s3:::my-test-bucket-1234abcd/*"
-	//     }
+	//     "Statement": [
+	//         {
+	//             "Sid": "statement-one",
+	//             "Effect": "Allow",
+	//             "Principal": {
+	//                 "AWS": "arn:aws:iam::12345:root"
+	//             },
+	//             "Action": [
+	//                 "s3:GetObject",
+	//                 "s3:PutObject"
+	//             ],
+	//             "Resource": "arn:aws:s3:::my-test-bucket-1234abcd/*"
+	//         }
+	//     ]
 	// }
 }
 
